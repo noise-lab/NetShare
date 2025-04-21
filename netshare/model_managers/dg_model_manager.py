@@ -14,6 +14,15 @@ def _train_model(create_new_model, config, input_train_data_folder,
         log_folder=log_folder)
     return True
 
+@ray.remote(scheduling_strategy="SPREAD", max_calls=1)
+def _load_model(create_new_model, config, input_train_data_folder,
+                 output_model_folder, log_folder):
+    model = create_new_model(config)
+    model.load(
+        input_train_data_folder=input_train_data_folder,
+        output_model_folder=output_model_folder,
+        log_folder=log_folder)
+    return True
 
 @ray.remote(scheduling_strategy="SPREAD", max_calls=1)
 def _generate_data(create_new_model, config, input_train_data_folder,
@@ -41,6 +50,18 @@ class DGModelManager(ModelManager):
             output_model_folder=output_model_folder,
             log_folder=log_folder))
         return True
+
+    def _load(self, input_train_data_folder, output_model_folder, log_folder,
+               create_new_model, model_config):
+        print(f"{self.__class__.__name__}.{inspect.stack()[0][3]}")
+        ray.get(_load_model.remote(
+            create_new_model=create_new_model,
+            config=model_config,
+            input_train_data_folder=input_train_data_folder,
+            output_model_folder=output_model_folder,
+            log_folder=log_folder))
+        return True
+
 
     def _generate(self, input_train_data_folder, input_model_folder,
                   output_syn_data_folder, log_folder, create_new_model,
