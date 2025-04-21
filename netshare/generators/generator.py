@@ -133,18 +133,6 @@ class Generator(object):
             create_new_model=self._model,
             model_config=self._model_config)
 
-    def _load(self, input_train_data_folder, output_model_folder, log_folder):
-        if not self._check_folder(output_model_folder):
-            return False
-        if not self._check_folder(log_folder):
-            return False
-        return self._model_manager.load(
-            input_train_data_folder=input_train_data_folder,
-            output_model_folder=output_model_folder,
-            log_folder=log_folder,
-            create_new_model=self._model,
-            model_config=self._model_config)
-
     def _check_folder(self, folder):
         if os.path.exists(folder):
             if self._overwrite:
@@ -196,24 +184,6 @@ class Generator(object):
             print('Failed to pre-process data')
             return False
         if not self._train(
-                input_train_data_folder=self._get_pre_processed_data_folder(
-                    work_folder),
-                output_model_folder=self._get_model_folder(work_folder),
-                log_folder=self._get_model_log_folder(work_folder)):
-            print('Failed to train the model')
-            return False
-        return True
-
-    def load(self, work_folder):
-        work_folder = os.path.expanduser(work_folder)
-        if not self._pre_process(
-                input_folder=self._ori_data_path,
-                output_folder=self._get_pre_processed_data_folder(work_folder),
-                log_folder=self._get_pre_processed_data_log_folder(
-                    work_folder)):
-            print('Failed to pre-process data')
-            return False
-        if not self._load(
                 input_train_data_folder=self._get_pre_processed_data_folder(
                     work_folder),
                 output_model_folder=self._get_model_folder(work_folder),

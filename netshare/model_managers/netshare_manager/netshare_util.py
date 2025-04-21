@@ -141,7 +141,7 @@ def _configs2configsgroup(
                         configs[config_id]["restore"] = False
                         epoch_range = list(
                             range(
-                                configs[config_id]["epoch_checkpoint_freq"]-1,
+                                configs[config_id]["epoch_checkpoint_freq"],
                                 configs[config_id]["epochs"],
                                 configs[config_id]["epoch_checkpoint_freq"]))
                         epoch_range.reverse()

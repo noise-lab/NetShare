@@ -81,6 +81,7 @@ def _train_specific_config_group(
             print("Skipping chunk0 training...")
         else:
             print("Start launching chunk0 experiments...")
+
             # launch first chunk
             config_idx = config_ids[0]
             result = ray.get(
@@ -118,3 +119,4 @@ def _train_specific_config_group(
             log_folder)
 
     return True
+

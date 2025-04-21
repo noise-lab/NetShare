@@ -2,7 +2,6 @@ import sys
 import os
 import json
 import inspect
-import pathlib
 import numpy as np
 
 from .model import Model
@@ -120,114 +119,6 @@ class DoppelGANgerTorchModel(Model):
             data_feature=data_feature,
             data_attribute=data_attribute,
             data_gen_flag=data_gen_flag,
-        )
-
-    def _load(self, input_train_data_folder, output_model_folder, log_folder):
-        print(f"{self.__class__.__name__}.{inspect.stack()[0][3]}")
-
-        self._config["result_folder"] = getattr(
-            self._config, "result_folder", output_model_folder)
-        self._config["dataset"] = getattr(
-            self._config, "dataset", input_train_data_folder)
-
-        print("Currently training with config:", self._config)
-        # save config to the result folder
-        with open(os.path.join(
-                self._config["result_folder"],
-                "config.json"), 'w') as fout:
-            json.dump(self._config, fout)
-
-        # load data
-        (
-            data_feature,
-            data_attribute,
-            data_gen_flag,
-            data_feature_outputs,
-            data_attribute_outputs,
-        ) = load_data(
-            path=self._config["dataset"],
-            sample_len=self._config["sample_len"])
-        num_real_attribute = len(data_attribute_outputs)
-
-        # self-norm if applicable
-        if self._config["self_norm"]:
-            (
-                data_feature,
-                data_attribute,
-                data_attribute_outputs,
-                real_attribute_mask
-            ) = normalize_per_sample(
-                data_feature,
-                data_attribute,
-                data_feature_outputs,
-                data_attribute_outputs)
-        else:
-            real_attribute_mask = [True] * num_real_attribute
-
-        data_feature, data_feature_outputs = add_gen_flag(
-            data_feature, data_gen_flag, data_feature_outputs, self._config["sample_len"]
-        )
-
-        # create directories
-        checkpoint_dir = os.path.join(
-            self._config["result_folder"],
-            "checkpoint")
-        if not os.path.exists(checkpoint_dir):
-            os.makedirs(checkpoint_dir)
-        load_ckpt = os.path.join(checkpoint_dir,
-                                str(max(pathlib.Path('.').glob('*.pt'),
-                                        key=lambda p: p.stat().st_ctime)))
-        sample_dir = os.path.join(self._config["result_folder"], "sample")
-        if not os.path.exists(sample_dir):
-            os.makedirs(sample_dir)
-        time_path = os.path.join(self._config["result_folder"], "time.txt")
-
-        dg = DoppelGANger(
-            checkpoint_dir=checkpoint_dir,
-            sample_dir=None,
-            time_path=time_path,
-            batch_size=self._config["batch_size"],
-            real_attribute_mask=real_attribute_mask,
-            max_sequence_len=data_feature.shape[1],
-            sample_len=self._config["sample_len"],
-            data_feature_outputs=data_feature_outputs,
-            data_attribute_outputs=data_attribute_outputs,
-            vis_freq=self._config["vis_freq"],
-            vis_num_sample=self._config["vis_num_sample"],
-            d_rounds=self._config["d_rounds"],
-            g_rounds=self._config["g_rounds"],
-            d_gp_coe=self._config["d_gp_coe"],
-            num_packing=self._config["num_packing"],
-            use_attr_discriminator=self._config["use_attr_discriminator"],
-            attr_d_gp_coe=self._config["attr_d_gp_coe"],
-            g_attr_d_coe=self._config["g_attr_d_coe"],
-            epoch_checkpoint_freq=self._config["epoch_checkpoint_freq"],
-            attribute_latent_dim=self._config["attribute_latent_dim"],
-            feature_latent_dim=self._config["feature_latent_dim"],
-            g_lr=self._config["g_lr"],
-            g_beta1=self._config["g_beta1"],
-            d_lr=self._config["d_lr"],
-            d_beta1=self._config["d_beta1"],
-            attr_d_lr=self._config["attr_d_lr"],
-            attr_d_beta1=self._config["attr_d_beta1"],
-            adam_eps=self._config["adam_eps"],
-            adam_amsgrad=self._config["adam_amsgrad"],
-            generator_attribute_num_units=self._config["generator_attribute_num_units"],
-            generator_attribute_num_layers=self._config["generator_attribute_num_layers"],
-            generator_feature_num_units=self._config["generator_feature_num_units"],
-            generator_feature_num_layers=self._config["generator_feature_num_layers"],
-            use_adaptive_rolling=self._config["use_adaptive_rolling"],
-            discriminator_num_layers=self._config["discriminator_num_layers"],
-            discriminator_num_units=self._config["discriminator_num_units"],
-            attr_discriminator_num_layers=self._config["attr_discriminator_num_layers"],
-            attr_discriminator_num_units=self._config["attr_discriminator_num_units"],
-            restore=getattr(self._config, "restore", False),
-            pretrain_dir=self._config["pretrain_dir"]
-        )
-
-        print(f"Loading checkpoint at {load_ckpt}")
-        dg.load(
-            model_path=load_ckpt,
         )
 
     def _generate(self, input_train_data_folder,
@@ -351,7 +242,7 @@ class DoppelGANgerTorchModel(Model):
         last_iteration_found = False
         epoch_range = list(
             range(
-                self._config["epoch_checkpoint_freq"] - 1,
+                self._config["epoch_checkpoint_freq"],
                 self._config["epochs"],
                 self._config["epoch_checkpoint_freq"],
             )
